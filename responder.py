@@ -1,5 +1,5 @@
 # -------------------------
-# 📚 IMPORTAÇÕES
+# 📙 IMPORTAÇÕES
 # -------------------------
 import os
 import json
@@ -26,7 +26,7 @@ CAMINHO_JSON = "chunks_comunicabr_2.json"
 DIRETORIO_CHROMA = "chroma_db"
 
 # -------------------------
-# 🧩 CARREGAR CHUNKS
+# 🧍‍ CHUNKS EM OBJETOS DOCUMENT
 # -------------------------
 with open(CAMINHO_JSON, "r", encoding="utf-8") as f:
     dados = json.load(f)
@@ -41,10 +41,14 @@ documentos = [
 # 🔎 EMBEDDINGS + BANCO VETORIAL
 # -------------------------
 embedding_engine = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-vector_db = Chroma.from_documents(documentos, embedding_engine)
+
+if os.path.exists(DIRETORIO_CHROMA):
+    vector_db = Chroma(persist_directory=DIRETORIO_CHROMA, embedding_function=embedding_engine)
+else:
+    vector_db = Chroma.from_documents(documentos, embedding_engine, persist_directory=DIRETORIO_CHROMA)
 
 # -------------------------
-# 🤖 MODELO E PROMPT
+# 🧐 MODELO E PROMPT
 # -------------------------
 llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo")
 prompt = PromptTemplate.from_template("""
@@ -60,7 +64,7 @@ Pergunta:
 n_documentos = 5
 
 # -------------------------
-# 🗺️ MAPEAMENTO DE UFs
+# 🌏 MAPEAMENTO DE UFs
 # -------------------------
 ufs = {
     "acre": "AC", "alagoas": "AL", "amapa": "AP", "amazonas": "AM", "bahia": "BA",
