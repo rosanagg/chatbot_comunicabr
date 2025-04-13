@@ -8,3 +8,5 @@ python-dotenv
 sentence-transformers
 unidecode
 pymupdf
+faiss-cpu
+

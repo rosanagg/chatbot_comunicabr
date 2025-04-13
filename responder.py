@@ -4,7 +4,7 @@
 import os
 import json
 from dotenv import load_dotenv
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain import hub
@@ -23,7 +23,7 @@ OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 # 📁 CAMINHOS
 # -------------------------
 CAMINHO_JSON = "chunks_comunicabr_2.json"
-DIRETORIO_CHROMA = "chroma_db"
+
 
 # -------------------------
 # 🧍‍ CHUNKS EM OBJETOS DOCUMENT
@@ -41,11 +41,7 @@ documentos = [
 # 🔎 EMBEDDINGS + BANCO VETORIAL
 # -------------------------
 embedding_engine = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-
-if os.path.exists(DIRETORIO_CHROMA):
-    vector_db = Chroma(persist_directory=DIRETORIO_CHROMA, embedding_function=embedding_engine)
-else:
-    vector_db = Chroma.from_documents(documentos, embedding_engine, persist_directory=DIRETORIO_CHROMA)
+vector_db = FAISS.from_documents(documentos, embedding_engine)
 
 # -------------------------
 # 🧐 MODELO E PROMPT
