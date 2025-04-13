@@ -1,32 +1,67 @@
+# -------------------------
+# 📚 IMPORTAÇÕES
+# -------------------------
+import os
+import json
+from dotenv import load_dotenv
+from langchain_community.vectorstores import Chroma
+from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain import hub
 from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-from dotenv import load_dotenv
-import os
+from langchain.prompts import PromptTemplate  
 
-# Carrega as variáveis do .env
-#load_dotenv()
-OPENAI_API_KEY = "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"
+# -------------------------
+# 🔑 VARIÁVEIS DE AMBIENTE
+# -------------------------
+load_dotenv()
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
-# Recarrega o banco vetorial salvo
+# -------------------------
+# 📁 CAMINHOS
+# -------------------------
+CAMINHO_JSON = "chunks_comunicabr_2.json"
+DIRETORIO_CHROMA = "chroma_db"
+
+# -------------------------
+# 🧩 CARREGAR CHUNKS
+# -------------------------
+with open(CAMINHO_JSON, "r", encoding="utf-8") as f:
+    dados = json.load(f)
+
+# Converte os chunks em objetos Document
+documentos = [
+    Document(page_content=chunk["conteudo"], metadata={"uf": chunk["uf"], "titulo": chunk["titulo"]})
+    for chunk in dados
+]
+
+# -------------------------
+# 🔎 EMBEDDINGS + BANCO VETORIAL
+# -------------------------
 embedding_engine = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
 vector_db = Chroma.from_documents(documentos, embedding_engine)
-#vector_db = Chroma(persist_directory="chroma_db", embedding_function=embedding_engine)
 
-
-# Puxa o prompt do LangChain Hub
-prompt = hub.pull("rlm/rag-prompt")
-
-# Inicializa o modelo da OpenAI
+# -------------------------
+# 🤖 MODELO E PROMPT
+# -------------------------
 llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo")
+prompt = PromptTemplate.from_template("""
+Você é um assistente especializado em políticas públicas. Com base apenas no contexto abaixo, responda à pergunta de forma clara, objetiva e baseada nas informações disponíveis.
 
-# Quantidade de documentos a recuperar por pergunta
+Contexto:
+{context}
+
+Pergunta:
+{question}
+""")
+
 n_documentos = 5
 
-# Dicionário de UFs
+# -------------------------
+# 🗺️ MAPEAMENTO DE UFs
+# -------------------------
 ufs = {
     "acre": "AC", "alagoas": "AL", "amapa": "AP", "amazonas": "AM", "bahia": "BA",
     "ceara": "CE", "distrito federal": "DF", "espirito santo": "ES", "goias": "GO",
@@ -38,7 +73,9 @@ ufs = {
 }
 ufs.update({sigla: sigla for sigla in ufs.values()})
 
-# Extrai a UF da pergunta
+# -------------------------
+# 🔍 FUNÇÃO: EXTRAI UF DA PERGUNTA
+# -------------------------
 def extrair_uf(pergunta):
     pergunta = pergunta.lower()
     for nome, sigla in ufs.items():
@@ -46,27 +83,36 @@ def extrair_uf(pergunta):
             return sigla
     return "NACIONAL"
 
-# Formata os documentos para o prompt
+# -------------------------
+# 📄 FUNÇÃO: FORMATAR CONTEXTO
+# -------------------------
 def format_docs(documentos):
-    return "\n\n".join(documento.page_content for documento in documentos)
+    return "\n\n".join(
+        f"Título: {d.metadata['titulo']}\nUF: {d.metadata['uf']}\n{d.page_content}"
+        for d in documentos
+    )
 
-# Função principal que será usada no Streamlit
+# -------------------------
+# 💬 FUNÇÃO PRINCIPAL: RESPONDER
+# -------------------------
 def responder(pergunta):
     uf_detectada = extrair_uf(pergunta)
-
     retriever = vector_db.as_retriever(
         search_kwargs={"k": n_documentos, "filter": {"uf": uf_detectada}}
     )
 
+    docs = retriever.get_relevant_documents(pergunta)
+    context = format_docs(docs)
+
     rag_dinamico = (
         {
-            "question": RunnablePassthrough(),
-            "context": retriever | format_docs
+            "question": pergunta,
+            "context": context
         }
         | prompt
         | llm
         | StrOutputParser()
     )
 
-    resposta = rag_dinamico.invoke(pergunta)
-    return f"🗺️ UF detectada: **{uf_detectada}**\n\n{resposta}"
+    print(f"[UF detectada: {uf_detectada}]")
+    return rag_dinamico.invoke(pergunta)
