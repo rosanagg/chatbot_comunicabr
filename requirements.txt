@@ -1,0 +1,10 @@
+streamlit
+langchain
+langchain-community
+langchain-openai
+langchain-huggingface
+chromadb
+python-dotenv
+sentence-transformers
+unidecode
+pymupdf
