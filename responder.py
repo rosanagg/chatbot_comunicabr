@@ -46,7 +46,7 @@ vector_db = FAISS.from_documents(documentos, embedding_engine)
 # -------------------------
 # 🧐 MODELO E PROMPT
 # -------------------------
-llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-3.5-turbo")
+llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4o-mini")
 prompt = PromptTemplate.from_template("""
 Você é um assistente especializado em políticas públicas. Com base apenas no contexto abaixo, responda à pergunta de forma clara, objetiva e baseada nas informações disponíveis.
 
