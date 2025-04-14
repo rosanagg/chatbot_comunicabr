@@ -97,17 +97,16 @@ def format_docs(documentos):
 # -------------------------
 def responder(pergunta):
     uf_detectada = extrair_uf(pergunta)
+
     retriever = vector_db.as_retriever(
         search_kwargs={"k": n_documentos, "filter": {"uf": uf_detectada}}
     )
 
-    docs = retriever.get_relevant_documents(pergunta)
-    context = format_docs(docs)
-
+    # monta o pipeline corretamente
     rag_dinamico = (
         {
-            "question": pergunta,
-            "context": context
+            "question": RunnablePassthrough(),     # passa a pergunta diretamente
+            "context": retriever | format_docs      # monta o contexto com base na pergunta
         }
         | prompt
         | llm
@@ -115,4 +114,4 @@ def responder(pergunta):
     )
 
     print(f"[UF detectada: {uf_detectada}]")
-    return rag_dinamico.invoke({"question": pergunta, "context": context})
+    return rag_dinamico.invoke(pergunta)
