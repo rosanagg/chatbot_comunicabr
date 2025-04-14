@@ -42,8 +42,8 @@ documentos = [
 # 🔎 EMBEDDINGS + BANCO VETORIAL
 # -------------------------
 embedding_engine = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-#vector_db = FAISS.from_documents(documentos, embedding_engine)
-vector_db = Chroma(persist_directory="chroma_db", embedding_function=embedding_engine)
+vector_db = FAISS.from_documents(documentos, embedding_engine)
+#vector_db = Chroma(persist_directory="chroma_db", embedding_function=embedding_engine)
 
 # -------------------------
 # 🧐 MODELO E PROMPT
