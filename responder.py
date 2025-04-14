@@ -115,4 +115,4 @@ def responder(pergunta):
     )
 
     print(f"[UF detectada: {uf_detectada}]")
-    return rag_dinamico.invoke(pergunta)
+    return rag_dinamico.invoke({"question": pergunta, "context": context})
