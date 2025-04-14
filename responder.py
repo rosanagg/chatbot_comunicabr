@@ -4,6 +4,7 @@
 import os
 import json
 from dotenv import load_dotenv
+from langchain_community.vectorstores import Chroma
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -41,14 +42,16 @@ documentos = [
 # 🔎 EMBEDDINGS + BANCO VETORIAL
 # -------------------------
 embedding_engine = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-vector_db = FAISS.from_documents(documentos, embedding_engine)
+#vector_db = FAISS.from_documents(documentos, embedding_engine)
+vector_db = Chroma(persist_directory="chroma_db", embedding_function=embedding_engine)
 
 # -------------------------
 # 🧐 MODELO E PROMPT
 # -------------------------
 llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4o-mini")
-prompt = PromptTemplate.from_template("""
-Você é um assistente especializado em políticas públicas. Com base apenas no contexto abaixo, responda à pergunta de forma clara, objetiva e baseada nas informações disponíveis.
+prompt_com_fontes = PromptTemplate.from_template("""
+Você é um assistente especializado em políticas públicas. Responda com base apenas no contexto abaixo.
+Dos dados dos chunks veja o que melhor se adapta para a pergunat realizada. usar somente dados dos chunks.
 
 Contexto:
 {context}
@@ -57,7 +60,7 @@ Pergunta:
 {question}
 """)
 
-n_documentos = 5
+n_documentos = 7
 
 # -------------------------
 # 🌏 MAPEAMENTO DE UFs
