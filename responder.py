@@ -49,7 +49,7 @@ vector_db = FAISS.from_documents(documentos, embedding_engine)
 # 🧐 MODELO E PROMPT
 # -------------------------
 llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4o-mini")
-prompt_com_fontes = PromptTemplate.from_template("""
+prompt = PromptTemplate.from_template("""
 Você é um assistente especializado em políticas públicas. Responda com base apenas no contexto abaixo.
 Dos dados dos chunks veja o que melhor se adapta para a pergunat realizada. usar somente dados dos chunks.
 
